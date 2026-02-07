@@ -1,0 +1,1673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Percolator AI - AI-Powered DeFi Factory for Solana</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Space Mono', monospace;
+        }
+
+        body {
+            background: #000;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        /* Canvas Background */
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.2;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Scanlines */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, #00ff41 2px, #00ff41 4px);
+            opacity: 0.1;
+            pointer-events: none;
+            animation: scan 8s linear infinite;
+            z-index: 2;
+        }
+
+        @keyframes scan {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(100%); }
+        }
+
+        /* Mouse Follower */
+        #mouse-follower {
+            position: fixed;
+            width: 384px;
+            height: 384px;
+            background: radial-gradient(circle, #ff006e 0%, transparent 70%);
+            opacity: 0.3;
+            pointer-events: none;
+            filter: blur(100px);
+            transform: translate(-50%, -50%);
+            transition: left 0.3s, top 0.3s;
+            z-index: 1;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            border-bottom: 2px solid #00ff41;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-container {
+            max-width: 100%;
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            position: relative;
+            width: 48px;
+            height: 48px;
+        }
+
+        .logo-icon-blur {
+            position: absolute;
+            inset: 0;
+            background: #ff006e;
+            filter: blur(20px);
+            opacity: 0.5;
+        }
+
+        .logo-icon-main {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            border: 2px solid #00ff41;
+            transform: rotate(45deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-icon svg {
+            width: 24px;
+            height: 24px;
+            color: #00ff41;
+            transform: rotate(-45deg);
+        }
+
+        .logo-text-main {
+            font-size: 1.5rem;
+            font-weight: 900;
+            letter-spacing: -0.05em;
+        }
+
+        .logo-text-sub {
+            font-size: 0.75rem;
+            color: #00ff41;
+            letter-spacing: 0.1em;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .nav-btn {
+            padding: 0.5rem 1.5rem;
+            font-weight: 700;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            transform: skewX(-10deg);
+        }
+
+        .nav-btn:hover {
+            transform: skewX(0deg);
+        }
+
+        .nav-btn span {
+            display: inline-block;
+        }
+
+        .nav-btn-twitter {
+            background: #000;
+            border: 2px solid #00ff41;
+            color: #00ff41;
+        }
+
+        .nav-btn-twitter:hover {
+            background: #00ff41;
+            color: #000;
+        }
+
+        .nav-btn-github {
+            background: #ff006e;
+            color: #000;
+        }
+
+        .nav-btn-github:hover {
+            background: #fff;
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            z-index: 10;
+            padding: 10rem 2rem 5rem;
+        }
+
+        .hero-container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        @media (min-width: 1024px) {
+            .hero-grid {
+                grid-template-columns: 7fr 5fr;
+            }
+        }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: #ff006e;
+            color: #000;
+            font-weight: 900;
+            font-size: 0.875rem;
+            transform: skewX(-10deg);
+            margin-bottom: 2rem;
+        }
+
+        .hero-badge span {
+            display: inline-block;
+            transform: skewX(10deg);
+        }
+
+        .hero-title {
+            font-size: 4rem;
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -0.05em;
+            margin-bottom: 2rem;
+        }
+
+        @media (min-width: 768px) {
+            .hero-title {
+                font-size: 6rem;
+            }
+        }
+
+        .hero-title-line1 {
+            display: block;
+            color: #fff;
+        }
+
+        .hero-title-line2 {
+            display: block;
+            background: linear-gradient(to right, #00ff41, #00d4ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-top: 0.5rem;
+        }
+
+        .hero-title-line3 {
+            display: block;
+            -webkit-text-stroke: 2px #ff006e;
+            -webkit-text-fill-color: transparent;
+            margin-top: 0.5rem;
+        }
+
+        .hero-description {
+            border-left: 4px solid #00ff41;
+            padding-left: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .hero-description p {
+            font-size: 1.25rem;
+            color: #d1d5db;
+            font-weight: 300;
+            margin-bottom: 1rem;
+        }
+
+        .hero-description-code {
+            font-size: 1.125rem;
+            color: #00ff41;
+        }
+
+        .hero-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            font-weight: 900;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: #00ff41;
+            color: #000;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: #fff;
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s;
+        }
+
+        .btn-primary:hover::after {
+            transform: scaleX(1);
+        }
+
+        .btn-primary span {
+            position: relative;
+            z-index: 10;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid #fff;
+            color: #fff;
+        }
+
+        .btn-secondary:hover {
+            background: #fff;
+            color: #000;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .stat-card {
+            border: 2px solid;
+            padding: 1rem;
+        }
+
+        .stat-card-1 {
+            border-color: #00ff41;
+            background: rgba(0, 255, 65, 0.05);
+        }
+
+        .stat-card-2 {
+            border-color: #ff006e;
+            background: rgba(255, 0, 110, 0.05);
+        }
+
+        .stat-card-3 {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .stat-card-4 {
+            border-color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 900;
+        }
+
+        .stat-card-1 .stat-value {
+            color: #00ff41;
+        }
+
+        .stat-card-2 .stat-value {
+            color: #ff006e;
+        }
+
+        .stat-card-3 .stat-value {
+            color: #00d4ff;
+        }
+
+        .stat-card-4 .stat-value {
+            color: #fff;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #9ca3af;
+            margin-top: 0.5rem;
+        }
+
+        /* Terminal */
+        .terminal-wrapper {
+            position: relative;
+        }
+
+        .terminal-glow {
+            position: absolute;
+            inset: -2rem;
+            background: linear-gradient(to right, rgba(0, 255, 65, 0.2), rgba(255, 0, 110, 0.2), rgba(0, 212, 255, 0.2));
+            filter: blur(60px);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 0.8; }
+        }
+
+        .terminal {
+            position: relative;
+            border: 4px solid #00ff41;
+            background: #000;
+            padding: 1.5rem;
+            transform: rotate(3deg);
+            transition: transform 0.5s;
+        }
+
+        .terminal:hover {
+            transform: rotate(0deg);
+        }
+
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #00ff41;
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+        }
+
+        .dot-red {
+            background: #ff006e;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .dot-green {
+            background: #00ff41;
+        }
+
+        .dot-blue {
+            background: #00d4ff;
+        }
+
+        .terminal-title {
+            margin-left: 1rem;
+            color: #00ff41;
+            font-size: 0.875rem;
+        }
+
+        .terminal-content {
+            font-size: 0.875rem;
+        }
+
+        .terminal-line {
+            margin-bottom: 0.5rem;
+        }
+
+        .terminal-gray {
+            color: #6b7280;
+        }
+
+        .terminal-green {
+            color: #00ff41;
+        }
+
+        .terminal-blue {
+            color: #00d4ff;
+        }
+
+        .terminal-pink {
+            color: #ff006e;
+        }
+
+        .terminal-deploying {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        /* Diagonal Divider */
+        .diagonal-divider {
+            height: 6rem;
+            background: linear-gradient(to right, #00ff41, #ff006e, #00d4ff);
+            transform: skewY(-2deg);
+            margin: 5rem 0;
+        }
+
+        /* Section */
+        .section {
+            padding: 5rem 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .section-container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 3.75rem;
+            font-weight: 900;
+            margin-bottom: 4rem;
+            letter-spacing: -0.05em;
+        }
+
+        .section-title-border {
+            border-bottom: 8px solid #ff006e;
+            display: inline-block;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0;
+        }
+
+        @media (min-width: 1024px) {
+            .features-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .feature-card {
+            position: relative;
+            border: 4px solid #fff;
+            padding: 2rem;
+            background: #000;
+            transition: transform 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-1rem);
+        }
+
+        @media (min-width: 1024px) {
+            .feature-card:nth-child(2),
+            .feature-card:nth-child(3) {
+                margin-left: -1px;
+            }
+        }
+
+        .feature-card-pink {
+            background: #ff006e;
+        }
+
+        .feature-card-blue {
+            background: #00d4ff;
+        }
+
+        .feature-number {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 4rem;
+            height: 4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 1.5rem;
+        }
+
+        .feature-number-1 {
+            background: #00ff41;
+            color: #000;
+        }
+
+        .feature-number-2 {
+            background: #000;
+            color: #ff006e;
+            border: 4px solid #fff;
+        }
+
+        .feature-number-3 {
+            background: #000;
+            color: #00d4ff;
+            border: 4px solid #fff;
+        }
+
+        .feature-icon {
+            width: 4rem;
+            height: 4rem;
+            margin-bottom: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .feature-icon-green {
+            color: #00ff41;
+        }
+
+        .feature-icon-black {
+            color: #000;
+        }
+
+        .feature-title {
+            font-size: 1.875rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+        }
+
+        .feature-title-black {
+            color: #000;
+        }
+
+        .feature-description {
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-description-gray {
+            color: #9ca3af;
+        }
+
+        .feature-description-black {
+            color: rgba(0, 0, 0, 0.8);
+        }
+
+        .feature-footer {
+            border-top: 2px solid;
+            padding-top: 1rem;
+            font-weight: 700;
+        }
+
+        .feature-footer-green {
+            border-color: #00ff41;
+            color: #00ff41;
+        }
+
+        .feature-footer-black {
+            border-color: #000;
+            color: #000;
+        }
+
+        /* Tabs Section */
+        .tabs-section {
+            background: #fff;
+            color: #000;
+        }
+
+        .tabs-nav {
+            display: flex;
+            border-bottom: 4px solid #000;
+            margin-bottom: 2rem;
+        }
+
+        .tab-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            font-weight: 900;
+            font-size: 1.25rem;
+            background: #e5e7eb;
+            color: #6b7280;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab-btn:hover {
+            background: #d1d5db;
+        }
+
+        .tab-btn.active {
+            background: #000;
+            color: #00ff41;
+            border: 4px solid #000;
+            margin-bottom: -1px;
+        }
+
+        .tabs-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 3rem;
+            align-items: start;
+        }
+
+        @media (min-width: 1024px) {
+            .tabs-content {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        .tab-border {
+            border-left: 8px solid;
+            padding-left: 1.5rem;
+        }
+
+        .tab-border-green {
+            border-color: #00ff41;
+        }
+
+        .tab-border-pink {
+            border-color: #ff006e;
+        }
+
+        .tab-border-blue {
+            border-color: #00d4ff;
+        }
+
+        .tab-content-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+        }
+
+        .tab-content-text {
+            font-size: 1.25rem;
+            color: #374151;
+            line-height: 1.6;
+        }
+
+        .tab-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .tab-stat-card {
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .tab-stat-card-green {
+            background: #000;
+            color: #00ff41;
+            border: 4px solid #00ff41;
+        }
+
+        .tab-stat-card-pink {
+            background: #000;
+            color: #ff006e;
+            border: 4px solid #ff006e;
+        }
+
+        .tab-stat-value {
+            font-size: 1.875rem;
+            font-weight: 900;
+        }
+
+        .tab-stat-label {
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .tab-grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .tab-grid-3 div {
+            background: #ff006e;
+            color: #fff;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .tab-grid-value {
+            font-size: 1.5rem;
+            font-weight: 900;
+        }
+
+        .tab-grid-label {
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+        }
+
+        .tab-status-card {
+            background: #000;
+            color: #00d4ff;
+            padding: 2rem;
+            border: 4px solid #00d4ff;
+            margin-top: 1.5rem;
+        }
+
+        .tab-status-label {
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .tab-status-value {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+        }
+
+        .tab-status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            background: #00ff41;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .tab-visual {
+            position: relative;
+            height: 24rem;
+            border: 8px solid #000;
+            overflow: hidden;
+        }
+
+        .tab-visual-gradient {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom right, #00ff41, #ff006e, #00d4ff);
+            opacity: 0.2;
+        }
+
+        .tab-visual-text {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9rem;
+            font-weight: 900;
+            opacity: 0.1;
+            transform: rotate(12deg);
+        }
+
+        .tab-visual-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 8px;
+            background: #00ff41;
+            transition: width 0.3s;
+        }
+
+        /* Tech Stack */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        @media (min-width: 1024px) {
+            .tech-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .tech-card {
+            position: relative;
+        }
+
+        .tech-card-glow {
+            position: absolute;
+            inset: -0.5rem;
+            opacity: 0;
+            filter: blur(40px);
+            transition: opacity 0.3s;
+        }
+
+        .tech-card:hover .tech-card-glow {
+            opacity: 0.2;
+        }
+
+        .tech-card-glow-green {
+            background: #00ff41;
+        }
+
+        .tech-card-glow-pink {
+            background: #ff006e;
+        }
+
+        .tech-card-glow-blue {
+            background: #00d4ff;
+        }
+
+        .tech-card-content {
+            position: relative;
+            background: #000;
+            border: 4px solid;
+            padding: 2rem;
+            transition: transform 0.3s;
+        }
+
+        .tech-card:hover .tech-card-content {
+            transform: scale(1.05);
+        }
+
+        .tech-card-green {
+            border-color: #00ff41;
+        }
+
+        .tech-card-pink {
+            border-color: #ff006e;
+        }
+
+        .tech-card-blue {
+            border-color: #00d4ff;
+        }
+
+        .tech-icon {
+            width: 3rem;
+            height: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .tech-icon-green {
+            color: #00ff41;
+        }
+
+        .tech-icon-pink {
+            color: #ff006e;
+        }
+
+        .tech-icon-blue {
+            color: #00d4ff;
+        }
+
+        .tech-title {
+            font-size: 1.5rem;
+            font-weight: 900;
+            margin-bottom: 0.75rem;
+        }
+
+        .tech-description {
+            color: #9ca3af;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            position: relative;
+            padding: 8rem 2rem;
+            background: linear-gradient(to right, #00ff41, #ff006e, #00d4ff);
+        }
+
+        .cta-pattern {
+            position: absolute;
+            inset: 0;
+            opacity: 0.2;
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.5) 10px, rgba(0,0,0,0.5) 20px);
+        }
+
+        .cta-container {
+            max-width: 1024px;
+            margin: 0 auto;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .cta-title {
+            font-size: 4.5rem;
+            font-weight: 900;
+            color: #000;
+            letter-spacing: -0.05em;
+            line-height: 0.9;
+            margin-bottom: 2rem;
+        }
+
+        @media (min-width: 1024px) {
+            .cta-title {
+                font-size: 6rem;
+            }
+        }
+
+        .cta-subtitle {
+            font-size: 1.5rem;
+            color: rgba(0, 0, 0, 0.8);
+            font-weight: 700;
+            margin-bottom: 3rem;
+        }
+
+        .cta-buttons {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 640px) {
+            .cta-buttons {
+                flex-direction: row;
+            }
+        }
+
+        .cta-btn {
+            padding: 1.5rem 3rem;
+            font-weight: 900;
+            font-size: 1.25rem;
+            border: 4px solid #000;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .cta-btn-primary {
+            background: #000;
+            color: #00ff41;
+        }
+
+        .cta-btn-primary:hover {
+            background: #fff;
+            color: #000;
+        }
+
+        .cta-btn-secondary {
+            background: #fff;
+            color: #000;
+        }
+
+        .cta-btn-secondary:hover {
+            background: #000;
+            color: #fff;
+        }
+
+        /* Footer */
+        footer {
+            background: #000;
+            border-top: 4px solid #00ff41;
+            padding: 3rem 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .footer-container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (min-width: 1024px) {
+            .footer-grid {
+                grid-template-columns: 2fr 1fr 1fr;
+            }
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-logo-icon {
+            width: 4rem;
+            height: 4rem;
+            background: #ff006e;
+            border: 4px solid #00ff41;
+            transform: rotate(45deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .footer-logo-icon svg {
+            width: 2rem;
+            height: 2rem;
+            color: #000;
+            transform: rotate(-45deg);
+        }
+
+        .footer-logo-text-main {
+            font-size: 1.875rem;
+            font-weight: 900;
+        }
+
+        .footer-logo-text-sub {
+            color: #00ff41;
+            font-size: 0.875rem;
+        }
+
+        .footer-description {
+            color: #6b7280;
+            max-width: 28rem;
+        }
+
+        .footer-section-title {
+            font-weight: 900;
+            margin-bottom: 1rem;
+        }
+
+        .footer-section-title-green {
+            color: #00ff41;
+        }
+
+        .footer-section-title-pink {
+            color: #ff006e;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-links a {
+            color: #9ca3af;
+            text-decoration: none;
+            transition: color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .footer-links a:hover {
+            color: #fff;
+        }
+
+        .footer-bottom {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 2px solid #00ff41;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            color: #6b7280;
+            font-size: 0.875rem;
+            gap: 1rem;
+        }
+
+        @media (min-width: 1024px) {
+            .footer-bottom {
+                flex-direction: row;
+            }
+        }
+
+        /* Glitch Effect */
+        .glitch {
+            animation: glitch 0.3s linear;
+        }
+
+        @keyframes glitch {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+        }
+
+        /* Icons */
+        .icon {
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            stroke-width: 0;
+            stroke: currentColor;
+            fill: currentColor;
+        }
+    </style>
+</head>
+<body>
+    <!-- Canvas Background -->
+    <canvas id="particle-canvas"></canvas>
+
+    <!-- Scanlines -->
+    <div class="scanlines"></div>
+
+    <!-- Mouse Follower -->
+    <div id="mouse-follower"></div>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <div class="logo-section">
+                <div class="logo-icon">
+                    <div class="logo-icon-blur"></div>
+                    <div class="logo-icon-main">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/><path d="M2 9h2"/></svg>
+                    </div>
+                </div>
+                <div>
+                    <div class="logo-text-main" id="logo-text">PERCOLATOR</div>
+                    <div class="logo-text-sub">AI_PROTOCOL_FACTORY</div>
+                </div>
+            </div>
+            <div class="nav-links">
+                <a href="https://x.com/PercolatorAI_0x" target="_blank" rel="noopener noreferrer" class="nav-btn nav-btn-twitter">
+                    <span>
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
+                    </span>
+                    <span>X/TWITTER</span>
+                </a>
+                <a href="https://github.com/aeyakovenko/percolator-cli" target="_blank" rel="noopener noreferrer" class="nav-btn nav-btn-github">
+                    <span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+                    </span>
+                    <span>GITHUB</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-grid">
+                <div>
+                    <div class="hero-badge">
+                        <span>BUILT ON ANATOLY YAKOVENKO'S FRAMEWORK</span>
+                    </div>
+                    
+                    <h1 class="hero-title">
+                        <span class="hero-title-line1">AI</span>
+                        <span class="hero-title-line2">DEFI</span>
+                        <span class="hero-title-line3">FACTORY</span>
+                    </h1>
+
+                    <div class="hero-description">
+                        <p>Transform protocol concepts into production-ready perpetual DEXs in minutes.</p>
+                        <p class="hero-description-code">&gt;_ AI generates. AI simulates. AI deploys.</p>
+                    </div>
+
+                    <div class="hero-buttons">
+                        <button class="btn btn-primary">
+                            <span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>
+                            </span>
+                            <span>INSTALL CLI</span>
+                        </button>
+                        <button class="btn btn-secondary">READ DOCS</button>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card stat-card-1">
+                            <div class="stat-value">65K+</div>
+                            <div class="stat-label">TPS CAPACITY</div>
+                        </div>
+                        <div class="stat-card stat-card-2">
+                            <div class="stat-value">50X</div>
+                            <div class="stat-label">MAX LEVERAGE</div>
+                        </div>
+                        <div class="stat-card stat-card-3">
+                            <div class="stat-value">$5B+</div>
+                            <div class="stat-label">POTENTIAL TVL</div>
+                        </div>
+                        <div class="stat-card stat-card-4">
+                            <div class="stat-value">Q1'26</div>
+                            <div class="stat-label">MVP LAUNCH</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="terminal-wrapper">
+                    <div class="terminal-glow"></div>
+                    <div class="terminal">
+                        <div class="terminal-header">
+                            <div class="terminal-dot dot-red"></div>
+                            <div class="terminal-dot dot-green"></div>
+                            <div class="terminal-dot dot-blue"></div>
+                            <span class="terminal-title">root@percolator:~#</span>
+                        </div>
+                        <div class="terminal-content">
+                            <div class="terminal-line terminal-gray">$ percolator-ai init --project "MyPerpDEX"</div>
+                            <div class="terminal-line terminal-green">[✓] Project initialized with 8 shards</div>
+                            <div class="terminal-line terminal-gray" style="margin-top: 1rem;">$ percolator-ai generate \</div>
+                            <div class="terminal-line terminal-gray">  --prompt "perp for SOL/ETH" \</div>
+                            <div class="terminal-line terminal-gray">  --model claude</div>
+                            <div class="terminal-line terminal-blue" style="margin-top: 0.5rem;">[AI] Generating smart contracts...</div>
+                            <div class="terminal-line terminal-blue">[AI] Optimizing for 65k TPS...</div>
+                            <div class="terminal-line terminal-green" style="margin-top: 0.5rem;">[✓] 4 contracts generated</div>
+                            <div class="terminal-line terminal-gray" style="margin-top: 1rem;">$ percolator-ai test --tps 50000</div>
+                            <div class="terminal-line terminal-pink">[LOAD] Simulating 50k TPS...</div>
+                            <div class="terminal-line terminal-green">[✓] Stress test passed</div>
+                            <div class="terminal-line terminal-gray" style="margin-top: 1rem;">$ percolator-ai deploy --network mainnet</div>
+                            <div class="terminal-line terminal-green terminal-deploying">[DEPLOYING...]</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Diagonal Divider -->
+    <div class="diagonal-divider"></div>
+
+    <!-- Features Section -->
+    <section class="section">
+        <div class="section-container">
+            <h2 class="section-title">
+                <span class="section-title-border">CORE ARCHITECTURE</span>
+            </h2>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-number feature-number-1">01</div>
+                    <svg class="feature-icon feature-icon-green" xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    <h3 class="feature-title">AI GENERATION</h3>
+                    <p class="feature-description feature-description-gray">
+                        Claude & Grok models generate production-ready Rust smart contracts from natural language prompts
+                    </p>
+                    <div class="feature-footer feature-footer-green">10X FASTER DEVELOPMENT</div>
+                </div>
+
+                <div class="feature-card feature-card-pink">
+                    <div class="feature-number feature-number-2">02</div>
+                    <svg class="feature-icon feature-icon-black" xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="16" x="4" y="4" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M12 4v2.5"/><path d="M12 17.5V20"/><path d="M4 12h2.5"/><path d="M17.5 12H20"/></svg>
+                    <h3 class="feature-title feature-title-black">SHARD SCALING</h3>
+                    <p class="feature-description feature-description-black">
+                        Modular Slab architecture with 8+ parallel shards for unlimited throughput capacity
+                    </p>
+                    <div class="feature-footer feature-footer-black">65,000+ TPS</div>
+                </div>
+
+                <div class="feature-card feature-card-blue">
+                    <div class="feature-number feature-number-3">03</div>
+                    <svg class="feature-icon feature-icon-black" xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+                    <h3 class="feature-title feature-title-black">AUTO SECURITY</h3>
+                    <p class="feature-description feature-description-black">
+                        AI-driven exploit detection with continuous monitoring and autonomous protocol upgrades
+                    </p>
+                    <div class="feature-footer feature-footer-black">100% AUDITED</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tabs Section -->
+    <section class="section tabs-section">
+        <div class="section-container">
+            <h2 class="section-title">WORKFLOW PIPELINE</h2>
+
+            <div class="tabs-nav">
+                <button class="tab-btn active" data-tab="0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    <span>GENERATE</span>
+                </button>
+                <button class="tab-btn" data-tab="1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+                    <span>TEST</span>
+                </button>
+                <button class="tab-btn" data-tab="2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="16" x="4" y="4" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M12 4v2.5"/><path d="M12 17.5V20"/><path d="M4 12h2.5"/><path d="M17.5 12H20"/></svg>
+                    <span>DEPLOY</span>
+                </button>
+            </div>
+
+            <div class="tabs-content">
+                <div>
+                    <div class="tab-panel active" data-panel="0">
+                        <div class="tab-border tab-border-green">
+                            <h3 class="tab-content-title">AI CODE GENERATION</h3>
+                            <p class="tab-content-text">
+                                Describe your protocol in natural language. Claude and Grok models analyze requirements, 
+                                generate optimized Rust/Anchor smart contracts, and create shard configurations automatically.
+                            </p>
+                        </div>
+                        <div class="tab-stats">
+                            <div class="tab-stat-card tab-stat-card-green">
+                                <div class="tab-stat-value">CLAUDE 4.5</div>
+                                <div class="tab-stat-label">Primary Model</div>
+                            </div>
+                            <div class="tab-stat-card tab-stat-card-pink" style="background: #000; color: #ff006e; border-color: #ff006e;">
+                                <div class="tab-stat-value">GROK 4.1</div>
+                                <div class="tab-stat-label">Alternative</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-panel" data-panel="1">
+                        <div class="tab-border tab-border-pink">
+                            <h3 class="tab-content-title">STRESS TESTING</h3>
+                            <p class="tab-content-text">
+                                Simulate real-world load with 50,000+ TPS. AI tunes leverage parameters, optimizes 
+                                gas costs, and validates security through automated exploit scanning.
+                            </p>
+                        </div>
+                        <div class="tab-grid-3">
+                            <div>
+                                <div class="tab-grid-value">50K</div>
+                                <div class="tab-grid-label">TPS TEST</div>
+                            </div>
+                            <div>
+                                <div class="tab-grid-value">1000</div>
+                                <div class="tab-grid-label">USERS SIM</div>
+                            </div>
+                            <div>
+                                <div class="tab-grid-value">100%</div>
+                                <div class="tab-grid-label">COVERAGE</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-panel" data-panel="2">
+                        <div class="tab-border tab-border-blue">
+                            <h3 class="tab-content-title">ONE-CLICK DEPLOY</h3>
+                            <p class="tab-content-text">
+                                Deploy to Solana devnet or mainnet with automatic verification. AI monitors 
+                                post-deployment performance and executes autonomous upgrades based on market data.
+                            </p>
+                        </div>
+                        <div class="tab-status-card">
+                            <div class="tab-status-label">DEPLOYMENT STATUS</div>
+                            <div class="tab-status-value">MAINNET READY</div>
+                            <div class="tab-status-indicator">
+                                <div class="status-dot"></div>
+                                <span>Live monitoring active</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-visual">
+                    <div class="tab-visual-gradient"></div>
+                    <div class="tab-visual-text" id="tab-visual-text">AI</div>
+                    <div class="tab-visual-progress" id="tab-progress"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tech Stack -->
+    <section class="section">
+        <div class="section-container">
+            <h2 class="section-title">
+                <span class="section-title-border" style="border-color: #00d4ff;">TECHNOLOGY</span>
+            </h2>
+
+            <div class="tech-grid">
+                <div class="tech-card">
+                    <div class="tech-card-glow tech-card-glow-green"></div>
+                    <div class="tech-card-content tech-card-green">
+                        <svg class="tech-icon tech-icon-green" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>
+                        <h3 class="tech-title">SLAB ARCHITECTURE</h3>
+                        <p class="tech-description">
+                            Two-tier design: central collateral vault + modular trading slabs 
+                            for optimal capital efficiency and horizontal scaling
+                        </p>
+                    </div>
+                </div>
+
+                <div class="tech-card">
+                    <div class="tech-card-glow tech-card-glow-pink"></div>
+                    <div class="tech-card-content tech-card-pink">
+                        <svg class="tech-icon tech-icon-pink" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="16" x="4" y="4" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M12 4v2.5"/><path d="M12 17.5V20"/><path d="M4 12h2.5"/><path d="M17.5 12H20"/></svg>
+                        <h3 class="tech-title">SOLANA NATIVE</h3>
+                        <p class="tech-description">
+                            Built on Solana for sub-second finality, low fees, and 
+                            65k+ TPS capacity with Switchboard oracle integration
+                        </p>
+                    </div>
+                </div>
+
+                <div class="tech-card">
+                    <div class="tech-card-glow tech-card-glow-blue"></div>
+                    <div class="tech-card-content tech-card-blue">
+                        <svg class="tech-icon tech-icon-blue" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></svg>
+                        <h3 class="tech-title">AI LEARNING</h3>
+                        <p class="tech-description">
+                            Learns from Polymarket & Helium data for predictive risk 
+                            management and autonomous margin optimization
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="cta-pattern"></div>
+        <div class="cta-container">
+            <h2 class="cta-title">
+                BUILD THE<br>FUTURE NOW
+            </h2>
+            <p class="cta-subtitle">
+                MVP LAUNCHING Q1 2026 // OPEN SOURCE // SOLANA ECOSYSTEM
+            </p>
+            <div class="cta-buttons">
+                <button class="cta-btn cta-btn-primary">INSTALL CLI NOW</button>
+                <a href="https://x.com/PercolatorAI_0x" target="_blank" rel="noopener noreferrer" class="cta-btn cta-btn-secondary">
+                    JOIN COMMUNITY
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-grid">
+                <div>
+                    <div class="footer-logo">
+                        <div class="footer-logo-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></svg>
+                        </div>
+                        <div>
+                            <div class="footer-logo-text-main">PERCOLATOR AI</div>
+                            <div class="footer-logo-text-sub">PROTOCOL FACTORY</div>
+                        </div>
+                    </div>
+                    <p class="footer-description">
+                        Revolutionary AI-powered DeFi development platform. Built on Anatoly Yakovenko's 
+                        percolator-cli framework for the Solana ecosystem.
+                    </p>
+                </div>
+
+                <div>
+                    <h4 class="footer-section-title footer-section-title-green">RESOURCES</h4>
+                    <ul class="footer-links">
+                        <li><a href="#"><span>&gt;</span> Documentation</a></li>
+                        <li><a href="https://github.com/aeyakovenko/percolator-cli" target="_blank"><span>&gt;</span> GitHub</a></li>
+                        <li><a href="#"><span>&gt;</span> CLI Reference</a></li>
+                        <li><a href="#"><span>&gt;</span> Examples</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="footer-section-title footer-section-title-pink">CONNECT</h4>
+                    <ul class="footer-links">
+                        <li>
+                            <a href="https://x.com/PercolatorAI_0x" target="_blank" rel="noopener noreferrer">
+                                <span>&gt;</span> Twitter/X
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://github.com/aeyakovenko/percolator-cli" target="_blank" rel="noopener noreferrer">
+                                <span>&gt;</span> GitHub
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>© 2026 PERCOLATOR AI // ALL RIGHTS RESERVED</p>
+                <p>POWERED BY SOLANA × AI × INNOVATION</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Particle Canvas Animation
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const particles = [];
+        for (let i = 0; i < 50; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 0.5,
+                vy: (Math.random() - 0.5) * 0.5,
+                size: Math.random() * 2
+            });
+        }
+
+        function animateParticles() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.strokeStyle = '#00ff41';
+            ctx.lineWidth = 0.5;
+            
+            particles.forEach((p, i) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                
+                if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+                
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fillStyle = '#00ff41';
+                ctx.fill();
+                
+                particles.forEach((p2, j) => {
+                    if (i !== j) {
+                        const dx = p.x - p2.x;
+                        const dy = p.y - p2.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (dist < 150) {
+                            ctx.beginPath();
+                            ctx.moveTo(p.x, p.y);
+                            ctx.lineTo(p2.x, p2.y);
+                            ctx.strokeStyle = `rgba(0, 255, 65, ${(150 - dist) / 150 * 0.2})`;
+                            ctx.stroke();
+                        }
+                    }
+                });
+            });
+            
+            requestAnimationFrame(animateParticles);
+        }
+
+        animateParticles();
+
+        // Mouse Follower
+        const mouseFollower = document.getElementById('mouse-follower');
+        document.addEventListener('mousemove', (e) => {
+            mouseFollower.style.left = e.clientX + 'px';
+            mouseFollower.style.top = e.clientY + 'px';
+        });
+
+        // Glitch Effect
+        const logoText = document.getElementById('logo-text');
+        setInterval(() => {
+            logoText.classList.add('glitch');
+            logoText.setAttribute('data-text', 'PERCOLATOR');
+            setTimeout(() => {
+                logoText.classList.remove('glitch');
+            }, 100);
+        }, 5000);
+
+        // Tabs
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabPanels = document.querySelectorAll('.tab-panel');
+        const tabVisualText = document.getElementById('tab-visual-text');
+        const tabProgress = document.getElementById('tab-progress');
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabIndex = parseInt(btn.getAttribute('data-tab'));
+                
+                tabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                tabPanels.forEach(p => p.classList.remove('active'));
+                document.querySelector(`[data-panel="${tabIndex}"]`).classList.add('active');
+                
+                const texts = ['AI', 'TEST', 'DEPLOY'];
+                tabVisualText.textContent = texts[tabIndex];
+                tabProgress.style.width = `${((tabIndex + 1) / 3) * 100}%`;
+            });
+        });
+
+        // Window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
